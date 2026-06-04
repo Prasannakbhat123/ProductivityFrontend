@@ -5,4 +5,4 @@ export const TRANSACTION_TYPE_OPTIONS: { label: string; value: TransactionEntryT
   { label: 'Income (money in)', value: 'income' },
 ];
 
-export const DEFAULT_INCOME_SOURCES = ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Refund', 'Other'];
+export const DEFAULT_INCOME_SOURCES = ['Paycheck', 'Freelance', 'Business', 'Investment', 'Gift', 'Refund', 'Other'];

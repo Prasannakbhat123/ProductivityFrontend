@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
 import { api } from '../../lib/api';
 import { formatCurrencyFromRupees, parseAmountToRupees } from '../../lib/format';
+import { isMonthlySalaryIncome } from '../../lib/income';
 import { CustomDropdown } from '../common/CustomDropdown';
 import type { CategoryPerformanceItem } from '../../types/finance';
 
@@ -239,9 +240,9 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
 
   useEffect(() => {
     if (summaryQuery.data) {
-      setIncomeInput(String(summaryQuery.data.totalIncomeRupees));
+      setIncomeInput(String(summaryQuery.data.monthlySalaryRupees ?? 0));
     }
-  }, [summaryQuery.data]);
+  }, [monthKey, summaryQuery.data?.monthlySalaryRupees]);
 
   useEffect(() => {
     const currentMonthBudget = (summaryQuery.data?.budgets ?? []).find((budget) => budget.category === budgetCategory);
@@ -290,10 +291,14 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
           <article className={shellCard}>
             <h3 className={`text-base sm:text-lg font-extrabold tracking-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Monthly Salary</h3>
             <p className={`mt-1 text-xs sm:text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
-              Set base salary for the month, or use Add Income on Overview for each deposit.
+              Recurring amount for this month (counted on the 1st). One-time deposits use Record transaction → Income on Overview or Expenses.
             </p>
             <p className={`mt-2 text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Current income: {formatCurrencyFromRupees(summaryQuery.data?.totalIncomeRupees ?? 0)}
+              Saved salary: {formatCurrencyFromRupees(summaryQuery.data?.monthlySalaryRupees ?? 0)}
+              <span className={isDark ? 'text-zinc-600' : 'text-zinc-400'}>
+                {' '}
+                · Total income this month (all entries): {formatCurrencyFromRupees(summaryQuery.data?.totalIncomeRupees ?? 0)}
+              </span>
             </p>
             <input
               type="number"
@@ -311,12 +316,12 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
             >
               {setIncomeMutation.isPending ? 'Saving...' : 'Save Salary'}
             </button>
-            {(incomesQuery.data?.items ?? []).length > 0 ? (
+            {(incomesQuery.data?.items ?? []).filter((income) => !isMonthlySalaryIncome(income)).length > 0 ? (
               <div className={`mt-4 max-h-48 space-y-2 overflow-y-auto rounded-xl border p-2 ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
                 <p className={`px-1 text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
-                  Income entries this month
+                  One-time income this month
                 </p>
-                {(incomesQuery.data?.items ?? []).map((income) => (
+                {(incomesQuery.data?.items ?? []).filter((income) => !isMonthlySalaryIncome(income)).map((income) => (
                   <div
                     key={income._id}
                     className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-xs ${isDark ? 'bg-zinc-900 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}

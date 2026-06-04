@@ -22,7 +22,10 @@ type OverviewSectionProps = {
   isDark: boolean;
   onOpenAddExpense: () => void;
   onOpenAddIncome: () => void;
-  dateIncomes: IncomeEntry[];
+  monthlySalaryRupees: number;
+  monthlySalaryEntry: IncomeEntry | null;
+  salaryDateKey: string;
+  oneTimeDateIncomes: IncomeEntry[];
   onDeleteIncome: (id: string) => void;
   onEditExpense: (expense: Expense) => void;
   onDeleteExpense: (id: string) => void;
@@ -49,7 +52,10 @@ export function OverviewSection({
   isDark,
   onOpenAddExpense,
   onOpenAddIncome,
-  dateIncomes,
+  monthlySalaryRupees,
+  monthlySalaryEntry,
+  salaryDateKey,
+  oneTimeDateIncomes,
   onDeleteIncome,
   onEditExpense,
   onDeleteExpense,
@@ -185,12 +191,47 @@ export function OverviewSection({
 
             <div className="space-y-3">
               <div className={`rounded-xl border p-3 ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}>
-                <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Income</p>
-                {dateIncomes.length === 0 ? (
-                  <p className={`mt-2 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No income on this date.</p>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Monthly salary (recurring)
+                </p>
+                {monthlySalaryRupees <= 0 ? (
+                  <p className={`mt-2 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                    No salary saved for this month. Set it under Manage → Monthly Salary.
+                  </p>
+                ) : (
+                  <div className={`mt-2 rounded-lg border px-3 py-2 text-sm ${isDark ? 'border-zinc-700 bg-zinc-950' : 'border-zinc-200 bg-white'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className={isDark ? 'text-zinc-100' : 'text-zinc-900'}>
+                          {formatCurrencyFromRupees(monthlySalaryRupees)}
+                        </p>
+                        <p className={`mt-0.5 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                          Recurring · recorded on {formatDateKeyDisplay(salaryDateKey)}
+                          {selectedDate !== salaryDateKey ? ' (open the 1st to see it on that day)' : ''}
+                        </p>
+                        {monthlySalaryEntry?.note ? (
+                          <p className={`mt-1 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{monthlySalaryEntry.note}</p>
+                        ) : null}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${isDark ? 'bg-lime-900/40 text-lime-300' : 'bg-lime-100 text-lime-800'}`}>
+                        Recurring
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`rounded-xl border p-3 ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  One-time income (this day)
+                </p>
+                {oneTimeDateIncomes.length === 0 ? (
+                  <p className={`mt-2 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                    No one-time income on {formatDateKeyDisplay(selectedDate)}. Use Record transaction → Income to add a deposit.
+                  </p>
                 ) : (
                   <div className="mt-2 space-y-2">
-                    {dateIncomes.map((income) => (
+                    {oneTimeDateIncomes.map((income) => (
                       <div
                         key={income._id}
                         className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${isDark ? 'border-zinc-700 bg-zinc-950' : 'border-zinc-200 bg-white'}`}

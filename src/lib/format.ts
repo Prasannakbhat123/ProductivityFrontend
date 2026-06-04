@@ -19,6 +19,17 @@ export function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Calendar cells use UTC noon so dateKey matches stored expense/income dates. */
+export function getMonthCalendarDays(monthKey: string): Date[] {
+  const [year, month] = monthKey.split('-').map(Number);
+  if (!year || !month) return [];
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+  });
+}
+
 export function parseAmountToRupees(value: string): number {
   const numberValue = Number(value);
   if (Number.isNaN(numberValue)) {

@@ -1,4 +1,5 @@
-﻿import type { PaginatedResult } from '../types/api';
+﻿import type { ActivityLogItem } from '../types/activity';
+import type { PaginatedResult } from '../types/api';
 import type {
   AnalyticsLog,
   BudgetCategory,
@@ -172,6 +173,27 @@ export const api = {
     search.set('scope', params.scope ?? 'auto');
     if (params.dateKey) search.set('dateKey', params.dateKey);
     return request<CategoryPerformanceItem[]>(`/api/finance/category-performance?${search.toString()}`);
+  },
+  getActivityLogs: (params: {
+    monthKey?: string;
+    dateKey?: string;
+    category?: string;
+    entityType?: string;
+    action?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const search = new URLSearchParams();
+    if (params.monthKey) search.set('monthKey', params.monthKey);
+    if (params.dateKey) search.set('dateKey', params.dateKey);
+    if (params.category) search.set('category', params.category);
+    if (params.entityType) search.set('entityType', params.entityType);
+    if (params.action) search.set('action', params.action);
+    if (params.search) search.set('search', params.search);
+    if (typeof params.page === 'number') search.set('page', String(params.page));
+    if (typeof params.limit === 'number') search.set('limit', String(params.limit));
+    return request<PaginatedResult<ActivityLogItem>>(`/api/activity/logs?${search.toString()}`);
   },
   getNotebooks: () => request<Notebook[]>('/api/notes/notebooks'),
   addNotebook: (payload: { title: string; imageUrl?: string; contentHtml?: string }) =>

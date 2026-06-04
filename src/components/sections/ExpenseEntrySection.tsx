@@ -54,8 +54,8 @@ export function ExpenseEntrySection({
         <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight">Record transaction</h2>
         <p className={`mt-1 text-xs sm:text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
           {isIncome
-            ? 'Log money received on a specific date (salary, freelance, refund, and more).'
-            : 'Log spending with category and date. Switch to income for money received.'}
+            ? 'One-time deposit on this date. Monthly salary is recurring and is set under Manage → Monthly Salary.'
+            : 'Log spending with category and date. Switch to income for a one-time deposit.'}
         </p>
       </div>
 

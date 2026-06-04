@@ -84,7 +84,9 @@ export function AddExpenseModal({
           <div>
             <h2 className="text-lg sm:text-xl font-bold">Record transaction</h2>
             <p className={`mt-0.5 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
-              {isIncome ? 'One-time money received on the date you choose.' : 'Spending for a category on the date you choose.'}
+              {isIncome
+                ? 'One-time deposit only. Monthly salary is set under Manage → Monthly Salary.'
+                : 'Spending for a category on the date you choose.'}
             </p>
           </div>
           <button

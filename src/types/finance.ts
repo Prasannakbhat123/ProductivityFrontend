@@ -92,6 +92,7 @@ export type HeatmapItem = {
 export type MonthSummary = {
   monthKey: string;
   scope?: 'full' | 'todate' | 'auto';
+  monthlySalaryRupees?: number;
   totalIncomeRupees: number;
   totalBudgetRupees: number;
   totalSpentRupees: number;

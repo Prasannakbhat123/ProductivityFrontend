@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CircleDollarSign } from 'lucide-react';
-import { addDays, endOfMonth, format, startOfMonth } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sidebar } from './components/layout/Sidebar';
 import { OverviewSection } from './components/sections/OverviewSection';
 import { LedgerSection } from './components/sections/LedgerSection';
+import { LogsSection } from './components/sections/LogsSection';
 import { ManageSection } from './components/sections/ManageSection';
 import { AnalyticsSection } from './components/sections/AnalyticsSection';
 import { NotesSection } from './components/sections/NotesSection';
@@ -16,7 +17,8 @@ import type { TransactionEntryType } from './lib/transactionEntry';
 import { ToastStack, type ToastItem, type ToastKind } from './components/common/ToastStack';
 import { api, createRealtimeEventSource } from './lib/api';
 import { getErrorMessage } from './lib/errors';
-import { getCurrentMonthKey, parseAmountToRupees, toDateKey } from './lib/format';
+import { getCurrentMonthKey, getMonthCalendarDays, parseAmountToRupees, toDateKey } from './lib/format';
+import { splitMonthIncomes } from './lib/income';
 import type { TabKey } from './types/ui';
 import type { Expense } from './types/finance';
 
@@ -194,27 +196,26 @@ function App() {
   }));
 
   const heatmapMap = new Map((heatmapQuery.data ?? []).map((item) => [item._id, item]));
-  const monthStart = startOfMonth(new Date(`${viewMonthKey}-01T00:00:00.000Z`));
-  const monthEnd = endOfMonth(monthStart);
-  const calendarDays: Date[] = [];
-  let cursor = monthStart;
-  while (cursor <= monthEnd) {
-    calendarDays.push(cursor);
-    cursor = addDays(cursor, 1);
-  }
+  const calendarDays = useMemo(() => getMonthCalendarDays(viewMonthKey), [viewMonthKey]);
   const maxHeat = Math.max(1, ...(heatmapQuery.data ?? []).map((item) => item.totalRupees));
 
   const monthExpenses = summaryQuery.data?.expenses ?? [];
   const monthIncomes = summaryQuery.data?.incomes ?? [];
+  const monthlySalaryRupees = summaryQuery.data?.monthlySalaryRupees ?? 0;
+
+  const { monthlySalaryEntry, oneTimeIncomes, salaryDateKey } = useMemo(
+    () => splitMonthIncomes(monthIncomes, viewMonthKey),
+    [monthIncomes, viewMonthKey],
+  );
 
   const selectedDateExpenses = useMemo(
     () => monthExpenses.filter((expense) => expense.dateKey === selectedDate),
     [monthExpenses, selectedDate],
   );
 
-  const selectedDateIncomes = useMemo(
-    () => monthIncomes.filter((income) => income.dateKey === selectedDate),
-    [monthIncomes, selectedDate],
+  const oneTimeDateIncomes = useMemo(
+    () => oneTimeIncomes.filter((income) => income.dateKey === selectedDate),
+    [oneTimeIncomes, selectedDate],
   );
 
   const selectedDateEvents = useMemo(
@@ -304,7 +305,10 @@ function App() {
                 setTransactionModalDefaultType('income');
                 setShowAddExpenseModal(true);
               }}
-              dateIncomes={selectedDateIncomes}
+              monthlySalaryRupees={monthlySalaryRupees}
+              monthlySalaryEntry={monthlySalaryEntry}
+              salaryDateKey={salaryDateKey}
+              oneTimeDateIncomes={oneTimeDateIncomes}
               onDeleteIncome={(id) => deleteIncomeMutation.mutate(id)}
               onEditExpense={setEditingExpense}
               onDeleteExpense={(id) => setDeletingExpenseId(id)}
@@ -343,6 +347,15 @@ function App() {
           ) : null}
 
           {activeTab === 'ledger' ? <LedgerSection monthDate={viewMonthDate} onChangeMonthDate={setViewMonthDate} isDark={isDark} /> : null}
+
+          {activeTab === 'logs' ? (
+            <LogsSection
+              monthDate={viewMonthDate}
+              onChangeMonthDate={setViewMonthDate}
+              isDark={isDark}
+              categories={uniqueCategories}
+            />
+          ) : null}
 
           {activeTab === 'manage' ? <ManageSection monthKey={viewMonthKey} isDark={isDark} /> : null}
 

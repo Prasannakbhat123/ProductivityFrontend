@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { api } from '../../lib/api';
-import { formatCurrencyFromRupees } from '../../lib/format';
+import { formatCurrencyFromRupees, formatDateKeyDisplay } from '../../lib/format';
+import { splitMonthIncomes } from '../../lib/income';
 import { PaginationControls } from '../common/PaginationControls';
 
 type LedgerSectionProps = {
@@ -65,6 +66,21 @@ export function LedgerSection({ monthDate, onChangeMonthDate, isDark }: LedgerSe
   }, [entries]);
 
   const categoryOptions = useMemo(() => categories.map((item) => item.category), [categories]);
+
+  const { monthlySalaryEntry, oneTimeIncomes, salaryDateKey } = useMemo(
+    () => splitMonthIncomes(summary?.incomes ?? [], monthKey),
+    [summary?.incomes, monthKey],
+  );
+
+  const oneTimeIncomeTotalRupees = useMemo(
+    () => oneTimeIncomes.reduce((sum, income) => sum + income.amountRupees, 0),
+    [oneTimeIncomes],
+  );
+
+  const sortedOneTimeIncomes = useMemo(
+    () => [...oneTimeIncomes].sort((a, b) => b.dateKey.localeCompare(a.dateKey)),
+    [oneTimeIncomes],
+  );
 
   const totalSaved = categories.reduce((sum, item) => sum + item.savedRupees, 0);
   const totalOverspent = categories.reduce((sum, item) => sum + item.overspentRupees, 0);
@@ -128,9 +144,23 @@ export function LedgerSection({ monthDate, onChangeMonthDate, isDark }: LedgerSe
 
       <article className={cardBase}>
         <h3 className={`mb-2 text-xs sm:text-sm font-bold uppercase tracking-wide ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Carry Forward Formula</h3>
-        <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <div className={`rounded-xl border p-3 text-xs ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-300' : 'border-zinc-300 bg-zinc-100 text-zinc-700'}`}>
-            Salary This Month
+            Monthly salary (recurring)
+            <p className={`mt-1 text-base font-bold ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+              {formatCurrencyFromRupees(summary?.monthlySalaryRupees ?? 0)}
+            </p>
+            <p className={`mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>Counted on {formatDateKeyDisplay(salaryDateKey)}</p>
+          </div>
+          <div className={`rounded-xl border p-3 text-xs ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-300' : 'border-zinc-300 bg-zinc-100 text-zinc-700'}`}>
+            One-time income
+            <p className={`mt-1 text-base font-bold ${isDark ? 'text-lime-300' : 'text-lime-600'}`}>
+              {formatCurrencyFromRupees(oneTimeIncomeTotalRupees)}
+            </p>
+            <p className={`mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{sortedOneTimeIncomes.length} deposit{sortedOneTimeIncomes.length === 1 ? '' : 's'}</p>
+          </div>
+          <div className={`rounded-xl border p-3 text-xs ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-300' : 'border-zinc-300 bg-zinc-100 text-zinc-700'}`}>
+            Total income
             <p className={`mt-1 text-base font-bold ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>{formatCurrencyFromRupees(summary?.totalIncomeRupees ?? 0)}</p>
           </div>
           <div className={`rounded-xl border p-3 text-xs ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-300' : 'border-zinc-300 bg-zinc-100 text-zinc-700'}`}>
@@ -148,13 +178,28 @@ export function LedgerSection({ monthDate, onChangeMonthDate, isDark }: LedgerSe
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <article className={cardBase}>
-          <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Income</p>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Monthly salary</p>
+          <p className={`mt-1 text-2xl font-black ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+            {formatCurrencyFromRupees(summary?.monthlySalaryRupees ?? 0)}
+          </p>
+        </article>
+        <article className={cardBase}>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>One-time income</p>
+          <p className={`mt-1 text-2xl font-black ${isDark ? 'text-lime-300' : 'text-lime-600'}`}>
+            {formatCurrencyFromRupees(oneTimeIncomeTotalRupees)}
+          </p>
+        </article>
+        <article className={cardBase}>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Total income</p>
           <p className={`mt-1 text-2xl font-black ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>{formatCurrencyFromRupees(summary?.totalIncomeRupees ?? 0)}</p>
         </article>
         <article className={cardBase}>
           <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Spent</p>
           <p className={`mt-1 text-2xl font-black ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>{formatCurrencyFromRupees(summary?.totalSpentRupees ?? 0)}</p>
         </article>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
         <article className={cardBase}>
           <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Carry Forward</p>
           <p className={`mt-1 text-2xl font-black ${(summary?.selectedMonthCarryForwardRupees ?? 0) < 0 ? 'text-red-500' : isDark ? 'text-lime-300' : 'text-lime-600'}`}>
@@ -245,8 +290,65 @@ export function LedgerSection({ monthDate, onChangeMonthDate, isDark }: LedgerSe
       </div>
 
       <article className={cardBase}>
+        <h3 className={`mb-1 text-base font-extrabold tracking-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Income activity</h3>
+        <p className={`mb-4 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+          Monthly salary is recurring (1st of month). Below are one-time deposits only.
+        </p>
+
+        {(summary?.monthlySalaryRupees ?? 0) > 0 ? (
+          <div
+            className={`mb-4 flex items-start justify-between gap-2 rounded-xl border p-3 text-xs md:grid-cols-[1fr_auto] ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}
+          >
+            <div>
+              <p className={`font-semibold ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Monthly salary</p>
+              <p className={isDark ? 'text-zinc-500' : 'text-zinc-600'}>
+                {formatDateKeyDisplay(salaryDateKey)} · {monthlySalaryEntry?.note || 'Recurring base income'}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className={`font-semibold ${isDark ? 'text-zinc-200' : 'text-zinc-900'}`}>
+                {formatCurrencyFromRupees(summary?.monthlySalaryRupees ?? 0)}
+              </span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${isDark ? 'bg-lime-900/40 text-lime-300' : 'bg-lime-100 text-lime-800'}`}>
+                Recurring
+              </span>
+            </div>
+          </div>
+        ) : (
+          <p className={`mb-4 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No monthly salary set. Use Manage → Monthly Salary.</p>
+        )}
+
+        <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+          One-time deposits ({sortedOneTimeIncomes.length})
+        </p>
+        <div className="space-y-2">
+          {summaryQuery.isLoading ? (
+            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>Loading income...</p>
+          ) : null}
+          {sortedOneTimeIncomes.map((income) => (
+            <div
+              key={income._id}
+              className={`grid gap-2 rounded-xl border p-3 text-xs md:grid-cols-[1fr_auto] ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}
+            >
+              <div>
+                <p className={`font-semibold ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>{income.source}</p>
+                <p className={isDark ? 'text-zinc-500' : 'text-zinc-600'}>{income.note || 'No note'}</p>
+                <p className={isDark ? 'text-zinc-500' : 'text-zinc-600'}>{formatDateKeyDisplay(income.dateKey)}</p>
+              </div>
+              <div className={`text-right font-semibold ${isDark ? 'text-lime-300' : 'text-lime-600'}`}>
+                +{formatCurrencyFromRupees(income.amountRupees)}
+              </div>
+            </div>
+          ))}
+          {!summaryQuery.isLoading && sortedOneTimeIncomes.length === 0 ? (
+            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No one-time income this month.</p>
+          ) : null}
+        </div>
+      </article>
+
+      <article className={cardBase}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className={`text-base font-extrabold tracking-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Ledger Entries</h3>
+          <h3 className={`text-base font-extrabold tracking-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Savings ledger entries</h3>
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={reasonFilter}
@@ -298,7 +400,9 @@ export function LedgerSection({ monthDate, onChangeMonthDate, isDark }: LedgerSe
               <div className={`text-right ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Bal: {formatCurrencyFromRupees(entry.balanceAfterRupees)}</div>
             </div>
           ))}
-          {!ledgerQuery.isLoading && entries.length === 0 ? <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No ledger entries for selected filters.</p> : null}
+          {!ledgerQuery.isLoading && entries.length === 0 ? (
+            <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No savings adjustments for selected filters.</p>
+          ) : null}
         </div>
         {ledgerResult ? (
           <div className="mt-4">
