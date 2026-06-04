@@ -69,6 +69,10 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
   });
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: api.getCategories });
   const recurringQuery = useQuery({ queryKey: ['recurring'], queryFn: api.getRecurring });
+  const incomesQuery = useQuery({
+    queryKey: ['incomes', monthKey],
+    queryFn: () => api.getIncomes({ monthKey, limit: 50 }),
+  });
 
   const getErrorMessage = (error: unknown, fallback: string): string => {
     if (error instanceof Error && error.message) return error.message;
@@ -285,7 +289,9 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
           <article className={shellCard}>
             <h3 className={`text-base sm:text-lg font-extrabold tracking-tight ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>Monthly Salary</h3>
-            <p className={`mt-1 text-xs sm:text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>Set or update your monthly income.</p>
+            <p className={`mt-1 text-xs sm:text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+              Set base salary for the month, or use Add Income on Overview for each deposit.
+            </p>
             <p className={`mt-2 text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
               Current income: {formatCurrencyFromRupees(summaryQuery.data?.totalIncomeRupees ?? 0)}
             </p>
@@ -303,8 +309,28 @@ export function ManageSection({ monthKey, isDark }: ManageSectionProps) {
               disabled={setIncomeMutation.isPending}
               className="mt-3 cursor-pointer rounded-xl bg-lime-300 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-lime-200 disabled:opacity-60"
             >
-              {setIncomeMutation.isPending ? 'Saving...' : 'Save Income'}
+              {setIncomeMutation.isPending ? 'Saving...' : 'Save Salary'}
             </button>
+            {(incomesQuery.data?.items ?? []).length > 0 ? (
+              <div className={`mt-4 max-h-48 space-y-2 overflow-y-auto rounded-xl border p-2 ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <p className={`px-1 text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                  Income entries this month
+                </p>
+                {(incomesQuery.data?.items ?? []).map((income) => (
+                  <div
+                    key={income._id}
+                    className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-xs ${isDark ? 'bg-zinc-900 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}
+                  >
+                    <span>
+                      {income.source} · {income.dateKey}
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-lime-300' : 'text-lime-600'}`}>
+                      +{formatCurrencyFromRupees(income.amountRupees)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </article>
 
           <article className={shellCard}>

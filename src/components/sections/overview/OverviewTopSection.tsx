@@ -10,6 +10,7 @@ type OverviewTopSectionProps = {
   monthDate: Date;
   onChangeMonthDate: (date: Date) => void;
   onOpenAddExpense: () => void;
+  onOpenAddIncome: () => void;
   view: 'daily' | 'weekly' | 'monthly';
   onChangeView: (view: 'daily' | 'weekly' | 'monthly') => void;
   calendarDays: Date[];
@@ -31,6 +32,7 @@ export function OverviewTopSection(props: OverviewTopSectionProps) {
     monthDate,
     onChangeMonthDate,
     onOpenAddExpense,
+    onOpenAddIncome,
     view,
     onChangeView,
     calendarDays,
@@ -114,6 +116,14 @@ export function OverviewTopSection(props: OverviewTopSectionProps) {
               }}
               className={`w-20 rounded-lg border px-2 py-1 text-xs outline-none ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100' : 'border-zinc-300 bg-white text-zinc-900'}`}
             />
+            <button
+              type="button"
+              onClick={onOpenAddIncome}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all duration-200 hover:-translate-y-0.5 ${isDark ? 'border-lime-400/50 bg-lime-400/10 text-lime-300 hover:border-lime-300 hover:bg-lime-400/20' : 'border-lime-400 bg-lime-50 text-lime-800 hover:border-lime-500 hover:bg-lime-100'}`}
+            >
+              <Plus size={12} />
+              Add Income
+            </button>
             <button
               type="button"
               onClick={onOpenAddExpense}

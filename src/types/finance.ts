@@ -17,6 +17,16 @@ export type Expense = {
   source: 'manual' | 'recurring-auto' | 'recurring-manual';
 };
 
+export type IncomeEntry = {
+  _id: string;
+  date: string;
+  dateKey: string;
+  monthKey: string;
+  amountRupees: number;
+  source: string;
+  note: string;
+};
+
 export type Goal = {
   _id: string;
   title: string;
@@ -92,6 +102,7 @@ export type MonthSummary = {
   totalOverspendAdjustmentsRupees: number;
   budgets: BudgetCategory[];
   expenses: Expense[];
+  incomes: IncomeEntry[];
   hasFutureDaysExcluded?: boolean;
 };
 

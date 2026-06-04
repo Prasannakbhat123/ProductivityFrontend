@@ -21,9 +21,10 @@ type ExpensesWorkspaceSectionProps = {
   dateExpenses: Expense[];
   events: CalendarEventItem[];
   categories: string[];
-  isPendingExpense: boolean;
+  isPendingEntry: boolean;
   onCreateCategory: (name: string) => Promise<void> | void;
   onAddExpense: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onAddIncome: (payload: { amount: string; source: string; note: string; date: string }) => void;
   onCreateEvent: (payload: {
     title: string;
     startsAt: string;
@@ -51,9 +52,10 @@ export function ExpensesWorkspaceSection(props: ExpensesWorkspaceSectionProps) {
     dateExpenses,
     events,
     categories,
-    isPendingExpense,
+    isPendingEntry,
     onCreateCategory,
     onAddExpense,
+    onAddIncome,
     onCreateEvent,
     isSavingEvent,
     onEditExpense,
@@ -112,9 +114,10 @@ export function ExpensesWorkspaceSection(props: ExpensesWorkspaceSectionProps) {
           <ExpenseEntrySection
             categories={categories}
             isDark={isDark}
-            isPending={isPendingExpense}
+            isPending={isPendingEntry}
             onCreateCategory={onCreateCategory}
-            onSubmit={onAddExpense}
+            onSubmitExpense={onAddExpense}
+            onSubmitIncome={onAddIncome}
           />
 
           <CalendarSection

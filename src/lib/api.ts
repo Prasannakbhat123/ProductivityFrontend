@@ -7,6 +7,7 @@ import type {
   CategoryPerformanceItem,
   CategorySpending,
   Expense,
+  IncomeEntry,
   Goal,
   HeatmapItem,
   LedgerEntry,
@@ -39,6 +40,17 @@ export const api = {
     request<MonthSummary>(`/api/finance/summary/${monthKey}?scope=${encodeURIComponent(scope)}`),
   setIncome: (payload: { monthKey: string; amountRupees: number; note?: string }) =>
     request('/api/finance/income', { method: 'POST', body: JSON.stringify(payload) }),
+  addIncome: (payload: { amountRupees: number; source: string; note?: string; date?: string }) =>
+    request<IncomeEntry>('/api/finance/incomes', { method: 'POST', body: JSON.stringify(payload) }),
+  getIncomes: (params: { dateKey?: string; monthKey?: string; limit?: number; page?: number }) => {
+    const search = new URLSearchParams();
+    if (params.dateKey) search.set('dateKey', params.dateKey);
+    if (params.monthKey) search.set('monthKey', params.monthKey);
+    if (typeof params.limit === 'number') search.set('limit', String(params.limit));
+    if (typeof params.page === 'number') search.set('page', String(params.page));
+    return request<PaginatedResult<IncomeEntry>>(`/api/finance/incomes?${search.toString()}`);
+  },
+  deleteIncome: (id: string) => request<{ ok: true }>(`/api/finance/incomes/${id}`, { method: 'DELETE' }),
   setBudget: (payload: { monthKey: string; category: string; limitRupees: number }) =>
     request<BudgetCategory>('/api/finance/budgets', { method: 'POST', body: JSON.stringify(payload) }),
   deleteBudget: (id: string) => request<{ message: string }>(`/api/finance/budgets/${id}`, { method: 'DELETE' }),

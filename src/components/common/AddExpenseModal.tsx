@@ -1,15 +1,22 @@
 import { X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CustomDropdown } from './CustomDropdown';
+import {
+  DEFAULT_INCOME_SOURCES,
+  TRANSACTION_TYPE_OPTIONS,
+  type TransactionEntryType,
+} from '../../lib/transactionEntry';
 
 type AddExpenseModalProps = {
   isOpen: boolean;
   isDark: boolean;
   categories: string[];
   isPending: boolean;
+  defaultEntryType?: TransactionEntryType;
   onClose: () => void;
   onCreateCategory: (name: string) => Promise<void> | void;
-  onSubmit: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onSubmitExpense: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onSubmitIncome: (payload: { amount: string; source: string; note: string; date: string }) => void;
   defaultDate?: string;
 };
 
@@ -18,19 +25,52 @@ export function AddExpenseModal({
   isDark,
   categories,
   isPending,
+  defaultEntryType = 'expense',
   onClose,
   onCreateCategory,
-  onSubmit,
+  onSubmitExpense,
+  onSubmitIncome,
   defaultDate,
 }: AddExpenseModalProps) {
+  const [entryType, setEntryType] = useState<TransactionEntryType>(defaultEntryType);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categories[0] ?? 'Food');
+  const [source, setSource] = useState(DEFAULT_INCOME_SOURCES[0]);
   const [note, setNote] = useState('');
   const [date, setDate] = useState(defaultDate ?? new Date().toISOString().slice(0, 10));
 
-  const options = useMemo(() => categories.map((item) => ({ label: item, value: item })), [categories]);
+  const categoryOptions = useMemo(() => categories.map((item) => ({ label: item, value: item })), [categories]);
+  const sourceOptions = useMemo(
+    () => DEFAULT_INCOME_SOURCES.map((item) => ({ label: item, value: item })),
+    [],
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setEntryType(defaultEntryType);
+    setDate(defaultDate ?? new Date().toISOString().slice(0, 10));
+  }, [isOpen, defaultEntryType, defaultDate]);
+
+  const isIncome = entryType === 'income';
+  const inputClass = `w-full rounded-xl border px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100 focus:border-lime-400' : 'border-zinc-300 bg-white text-zinc-900 focus:border-lime-500'}`;
+  const submitClass =
+    'rounded-xl bg-lime-300 px-4 py-2 text-xs sm:text-sm font-semibold text-zinc-950 transition hover:bg-lime-200 disabled:opacity-50';
 
   if (!isOpen) return null;
+
+  const resetFields = () => {
+    setAmount('');
+    setNote('');
+  };
+
+  const handleSubmit = () => {
+    if (isIncome) {
+      onSubmitIncome({ amount, source, note, date });
+    } else {
+      onSubmitExpense({ amount, category, note, date });
+    }
+    resetFields();
+  };
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4 sm:p-6" onClick={onClose} role="presentation">
@@ -41,7 +81,12 @@ export function AddExpenseModal({
         className={`w-full max-w-xs sm:max-w-sm md:max-w-xl rounded-2xl border p-4 sm:p-6 shadow-2xl ${isDark ? 'border-zinc-700 bg-zinc-950 text-zinc-100' : 'border-zinc-300 bg-white text-zinc-900'}`}
       >
         <div className="mb-4 sm:mb-5 flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl font-bold">Add Expense</h2>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold">Record transaction</h2>
+            <p className={`mt-0.5 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+              {isIncome ? 'One-time money received on the date you choose.' : 'Spending for a category on the date you choose.'}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -52,6 +97,15 @@ export function AddExpenseModal({
         </div>
 
         <div className="grid gap-3 sm:gap-4">
+          <CustomDropdown
+            label="Transaction type"
+            value={entryType}
+            options={TRANSACTION_TYPE_OPTIONS}
+            placeholder="Select type"
+            onChange={(value) => setEntryType(value as TransactionEntryType)}
+            isDark={isDark}
+          />
+
           <div>
             <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Amount (INR)</label>
             <input
@@ -60,21 +114,34 @@ export function AddExpenseModal({
               step="1"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              className={`w-full rounded-xl border px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100 focus:border-lime-400' : 'border-zinc-300 bg-white text-zinc-900 focus:border-lime-500'}`}
+              className={inputClass}
               style={{ colorScheme: isDark ? 'dark' : 'light' }}
             />
           </div>
 
-          <CustomDropdown
-            label="Category"
-            value={category}
-            options={options}
-            placeholder="Select category"
-            onChange={setCategory}
-            onCreateOption={onCreateCategory}
-            searchPlaceholder="Search or add category"
-            isDark={isDark}
-          />
+          {isIncome ? (
+            <CustomDropdown
+              label="Income source"
+              value={source}
+              options={sourceOptions}
+              placeholder="Select source"
+              onChange={setSource}
+              onCreateOption={(name) => setSource(name)}
+              searchPlaceholder="Search or add source"
+              isDark={isDark}
+            />
+          ) : (
+            <CustomDropdown
+              label="Category"
+              value={category}
+              options={categoryOptions}
+              placeholder="Select category"
+              onChange={setCategory}
+              onCreateOption={onCreateCategory}
+              searchPlaceholder="Search or add category"
+              isDark={isDark}
+            />
+          )}
 
           <div>
             <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Date</label>
@@ -82,18 +149,18 @@ export function AddExpenseModal({
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
-              className={`w-full rounded-xl border px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100 focus:border-lime-400' : 'border-zinc-300 bg-white text-zinc-900 focus:border-lime-500'}`}
+              className={inputClass}
               style={{ colorScheme: isDark ? 'dark' : 'light' }}
             />
           </div>
 
           <div>
-            <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Note (Optional)</label>
+            <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>Note (optional)</label>
             <input
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              className={`w-full rounded-xl border px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition ${isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100 focus:border-lime-400' : 'border-zinc-300 bg-white text-zinc-900 focus:border-lime-500'}`}
-              style={{ colorScheme: isDark ? 'dark' : 'light' }}
+              placeholder={isIncome ? 'e.g. Client invoice, June salary' : undefined}
+              className={inputClass}
             />
           </div>
         </div>
@@ -109,14 +176,10 @@ export function AddExpenseModal({
           <button
             type="button"
             disabled={isPending || !amount || Number(amount) <= 0}
-            onClick={() => {
-              onSubmit({ amount, category, note, date });
-              setAmount('');
-              setNote('');
-            }}
-            className="rounded-xl bg-lime-300 px-4 py-2 text-xs sm:text-sm font-semibold text-zinc-950 transition hover:bg-lime-200 disabled:opacity-50"
+            onClick={handleSubmit}
+            className={submitClass}
           >
-            {isPending ? 'Saving...' : 'Add Expense'}
+            {isPending ? 'Saving...' : isIncome ? 'Save income' : 'Save expense'}
           </button>
         </div>
       </div>

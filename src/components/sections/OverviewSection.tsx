@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CalendarEventItem, Expense, Goal, HeatmapItem, MonthSummary } from '../../types/finance';
+import type { CalendarEventItem, Expense, Goal, HeatmapItem, IncomeEntry, MonthSummary } from '../../types/finance';
 import { formatCurrencyFromRupees, formatDateKeyDisplay, formatDateTimeDisplay } from '../../lib/format';
 import { OverviewTopSection } from './overview/OverviewTopSection';
 import { OverviewBottomCards } from './overview/OverviewBottomCards';
@@ -21,6 +21,9 @@ type OverviewSectionProps = {
   goals: Goal[];
   isDark: boolean;
   onOpenAddExpense: () => void;
+  onOpenAddIncome: () => void;
+  dateIncomes: IncomeEntry[];
+  onDeleteIncome: (id: string) => void;
   onEditExpense: (expense: Expense) => void;
   onDeleteExpense: (id: string) => void;
   onCompleteGoal: (id: string, isCompleted: boolean) => void;
@@ -45,6 +48,9 @@ export function OverviewSection({
   goals,
   isDark,
   onOpenAddExpense,
+  onOpenAddIncome,
+  dateIncomes,
+  onDeleteIncome,
   onEditExpense,
   onDeleteExpense,
   onCompleteGoal,
@@ -134,6 +140,7 @@ export function OverviewSection({
         monthDate={monthDate}
         onChangeMonthDate={onChangeMonthDate}
         onOpenAddExpense={onOpenAddExpense}
+        onOpenAddIncome={onOpenAddIncome}
         view={view}
         onChangeView={setView}
         calendarDays={calendarDays}
@@ -177,6 +184,39 @@ export function OverviewSection({
             </div>
 
             <div className="space-y-3">
+              <div className={`rounded-xl border p-3 ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Income</p>
+                {dateIncomes.length === 0 ? (
+                  <p className={`mt-2 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>No income on this date.</p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {dateIncomes.map((income) => (
+                      <div
+                        key={income._id}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${isDark ? 'border-zinc-700 bg-zinc-950' : 'border-zinc-200 bg-white'}`}
+                      >
+                        <div>
+                          <p className={isDark ? 'text-zinc-100' : 'text-zinc-900'}>{income.source}</p>
+                          <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{income.note || 'No note'}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-semibold ${isDark ? 'text-lime-300' : 'text-lime-600'}`}>
+                            +{formatCurrencyFromRupees(income.amountRupees)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteIncome(income._id)}
+                            className={`rounded-lg border px-2 py-1 text-xs ${isDark ? 'border-red-800 text-red-300' : 'border-red-300 text-red-700'}`}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className={`rounded-xl border p-3 ${isDark ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-300 bg-zinc-100'}`}>
                 <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Expenses</p>
                 {dateExpenses.length === 0 ? (

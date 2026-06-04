@@ -12,6 +12,7 @@ import { ExpensesWorkspaceSection } from './components/sections/expenses/Expense
 import { ExpenseEditorModal } from './components/common/ExpenseEditorModal';
 import { ConfirmActionModal } from './components/common/ConfirmActionModal';
 import { AddExpenseModal } from './components/common/AddExpenseModal';
+import type { TransactionEntryType } from './lib/transactionEntry';
 import { ToastStack, type ToastItem, type ToastKind } from './components/common/ToastStack';
 import { api, createRealtimeEventSource } from './lib/api';
 import { getErrorMessage } from './lib/errors';
@@ -29,6 +30,7 @@ function App() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [transactionModalDefaultType, setTransactionModalDefaultType] = useState<TransactionEntryType>('expense');
   const [isDark, setIsDark] = useState(true);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
@@ -58,6 +60,9 @@ function App() {
     };
 
     source.addEventListener('expense.created', refresh);
+    source.addEventListener('income.created', refresh);
+    source.addEventListener('income.updated', refresh);
+    source.addEventListener('income.deleted', refresh);
     source.addEventListener('month.summary.updated', refresh);
     source.addEventListener('analytics.updated', refresh);
     source.addEventListener('rollover.completed', refresh);
@@ -74,6 +79,31 @@ function App() {
   const analyticsQuery = useQuery({ queryKey: ['analytics-logs'], queryFn: api.getAnalyticsLogs });
   const heatmapQuery = useQuery({ queryKey: ['heatmap', viewMonthKey], queryFn: () => api.getHeatmap(viewMonthKey) });
   const eventsQuery = useQuery({ queryKey: ['events', viewMonthKey], queryFn: () => api.getEvents(viewMonthKey) });
+  const addIncomeMutation = useMutation({
+    mutationFn: (payload: { amount: string; source: string; note: string; date: string }) =>
+      api.addIncome({
+        amountRupees: parseAmountToRupees(payload.amount),
+        source: payload.source,
+        note: payload.note,
+        date: new Date(`${payload.date}T12:00:00.000Z`).toISOString(),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      setShowAddExpenseModal(false);
+      pushToast('success', 'Income recorded.');
+    },
+    onError: (error) => pushToast('error', getErrorMessage(error, 'Failed to add income.')),
+  });
+
+  const deleteIncomeMutation = useMutation({
+    mutationFn: (id: string) => api.deleteIncome(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      pushToast('success', 'Income removed.');
+    },
+    onError: (error) => pushToast('error', getErrorMessage(error, 'Failed to delete income.')),
+  });
+
   const addExpenseMutation = useMutation({
     mutationFn: (payload: { amount: string; category: string; note: string; date: string }) =>
       api.addExpense({
@@ -82,7 +112,10 @@ function App() {
         note: payload.note,
         date: new Date(`${payload.date}T12:00:00.000Z`).toISOString(),
       }),
-    onSuccess: () => queryClient.invalidateQueries(),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      pushToast('success', 'Expense saved.');
+    },
     onError: (error) => pushToast('error', getErrorMessage(error, 'Failed to add expense.')),
   });
 
@@ -172,10 +205,16 @@ function App() {
   const maxHeat = Math.max(1, ...(heatmapQuery.data ?? []).map((item) => item.totalRupees));
 
   const monthExpenses = summaryQuery.data?.expenses ?? [];
+  const monthIncomes = summaryQuery.data?.incomes ?? [];
 
   const selectedDateExpenses = useMemo(
     () => monthExpenses.filter((expense) => expense.dateKey === selectedDate),
     [monthExpenses, selectedDate],
+  );
+
+  const selectedDateIncomes = useMemo(
+    () => monthIncomes.filter((income) => income.dateKey === selectedDate),
+    [monthIncomes, selectedDate],
   );
 
   const selectedDateEvents = useMemo(
@@ -257,7 +296,16 @@ function App() {
               selectedDateEvents={selectedDateEvents}
               goals={goalsQuery.data ?? []}
               isDark={isDark}
-              onOpenAddExpense={() => setShowAddExpenseModal(true)}
+              onOpenAddExpense={() => {
+                setTransactionModalDefaultType('expense');
+                setShowAddExpenseModal(true);
+              }}
+              onOpenAddIncome={() => {
+                setTransactionModalDefaultType('income');
+                setShowAddExpenseModal(true);
+              }}
+              dateIncomes={selectedDateIncomes}
+              onDeleteIncome={(id) => deleteIncomeMutation.mutate(id)}
               onEditExpense={setEditingExpense}
               onDeleteExpense={(id) => setDeletingExpenseId(id)}
               onCompleteGoal={(id, isCompleted) => completeGoalMutation.mutate({ id, isCompleted })}
@@ -281,11 +329,12 @@ function App() {
               dateExpenses={selectedDateExpenses}
               events={eventsQuery.data ?? []}
               categories={uniqueCategories}
-              isPendingExpense={addExpenseMutation.isPending}
+              isPendingEntry={addExpenseMutation.isPending || addIncomeMutation.isPending}
               onCreateCategory={async (name) => {
                 await createCategoryMutation.mutateAsync(name);
               }}
               onAddExpense={(payload) => addExpenseMutation.mutate(payload)}
+              onAddIncome={(payload) => addIncomeMutation.mutate(payload)}
               onCreateEvent={(payload) => addEventMutation.mutate(payload)}
               isSavingEvent={addEventMutation.isPending}
               onEditExpense={setEditingExpense}
@@ -305,16 +354,19 @@ function App() {
             isOpen={showAddExpenseModal}
             isDark={isDark}
             categories={uniqueCategories}
-            isPending={addExpenseMutation.isPending}
+            isPending={addExpenseMutation.isPending || addIncomeMutation.isPending}
+            defaultEntryType={transactionModalDefaultType}
+            defaultDate={selectedDate}
             onClose={() => setShowAddExpenseModal(false)}
             onCreateCategory={async (name) => {
               await createCategoryMutation.mutateAsync(name);
             }}
-            onSubmit={(payload) => {
+            onSubmitExpense={(payload) => {
               addExpenseMutation.mutate(payload, {
                 onSuccess: () => setShowAddExpenseModal(false),
               });
             }}
+            onSubmitIncome={(payload) => addIncomeMutation.mutate(payload)}
           />
 
           {editingExpense ? (
