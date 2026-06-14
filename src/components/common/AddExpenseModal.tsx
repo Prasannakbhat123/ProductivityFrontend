@@ -15,7 +15,7 @@ type AddExpenseModalProps = {
   defaultEntryType?: TransactionEntryType;
   onClose: () => void;
   onCreateCategory: (name: string) => Promise<void> | void;
-  onSubmitExpense: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onSubmitExpense: (payload: { amount: string; category: string; title: string; note: string; date: string }) => void;
   onSubmitIncome: (payload: { amount: string; source: string; note: string; date: string }) => void;
   defaultDate?: string;
 };
@@ -35,6 +35,7 @@ export function AddExpenseModal({
   const [entryType, setEntryType] = useState<TransactionEntryType>(defaultEntryType);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categories[0] ?? 'Food');
+  const [title, setTitle] = useState('');
   const [source, setSource] = useState(DEFAULT_INCOME_SOURCES[0]);
   const [note, setNote] = useState('');
   const [date, setDate] = useState(defaultDate ?? new Date().toISOString().slice(0, 10));
@@ -60,6 +61,7 @@ export function AddExpenseModal({
 
   const resetFields = () => {
     setAmount('');
+    setTitle('');
     setNote('');
   };
 
@@ -67,7 +69,7 @@ export function AddExpenseModal({
     if (isIncome) {
       onSubmitIncome({ amount, source, note, date });
     } else {
-      onSubmitExpense({ amount, category, note, date });
+      onSubmitExpense({ amount, category, title, note, date });
     }
     resetFields();
   };
@@ -133,16 +135,29 @@ export function AddExpenseModal({
               isDark={isDark}
             />
           ) : (
-            <CustomDropdown
-              label="Category"
-              value={category}
-              options={categoryOptions}
-              placeholder="Select category"
-              onChange={setCategory}
-              onCreateOption={onCreateCategory}
-              searchPlaceholder="Search or add category"
-              isDark={isDark}
-            />
+            <>
+              <CustomDropdown
+                label="Category"
+                value={category}
+                options={categoryOptions}
+                placeholder="Select category"
+                onChange={setCategory}
+                onCreateOption={onCreateCategory}
+                searchPlaceholder="Search or add category"
+                isDark={isDark}
+              />
+              <div>
+                <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                  Title (optional)
+                </label>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="e.g. Groceries run, Uber to airport"
+                  className={inputClass}
+                />
+              </div>
+            </>
           )}
 
           <div>

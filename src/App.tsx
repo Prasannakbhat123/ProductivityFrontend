@@ -107,10 +107,11 @@ function App() {
   });
 
   const addExpenseMutation = useMutation({
-    mutationFn: (payload: { amount: string; category: string; note: string; date: string }) =>
+    mutationFn: (payload: { amount: string; category: string; title?: string; note: string; date: string }) =>
       api.addExpense({
         amountRupees: parseAmountToRupees(payload.amount),
         category: payload.category,
+        title: payload.title?.trim() || undefined,
         note: payload.note,
         date: new Date(`${payload.date}T12:00:00.000Z`).toISOString(),
       }),
@@ -122,10 +123,11 @@ function App() {
   });
 
   const updateExpenseMutation = useMutation({
-    mutationFn: (payload: { id: string; amountRupees: number; category: string; note?: string }) =>
+    mutationFn: (payload: { id: string; amountRupees: number; category: string; title?: string; note?: string }) =>
       api.updateExpense(payload.id, {
         amountRupees: payload.amountRupees,
         category: payload.category,
+        title: payload.title?.trim() ?? '',
         note: payload.note,
       }),
     onSuccess: () => {
@@ -392,6 +394,7 @@ function App() {
                   id: payload.id,
                   amountRupees: parseAmountToRupees(String(payload.amountRupees)),
                   category: payload.category,
+                  title: payload.title,
                   note: payload.note,
                 });
               }}

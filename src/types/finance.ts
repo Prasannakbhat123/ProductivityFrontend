@@ -13,6 +13,7 @@ export type Expense = {
   monthKey: string;
   amountRupees: number;
   category: string;
+  title?: string;
   note: string;
   source: 'manual' | 'recurring-auto' | 'recurring-manual';
 };

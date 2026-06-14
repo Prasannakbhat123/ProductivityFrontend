@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import { formatCurrencyFromRupees, formatDateKeyDisplay } from '../../../lib/format';
+import { getExpenseDisplayLabel } from '../../../lib/expense';
 import type { Expense } from '../../../types/finance';
 import { PaginationControls } from '../../common/PaginationControls';
 
@@ -98,11 +99,12 @@ export function ExpenseSearchPanel({ monthKey, isDark, categories, onEditExpense
           >
             <div>
               <p className={`text-sm font-semibold ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                {expense.category} · {formatCurrencyFromRupees(expense.amountRupees)}
+                {getExpenseDisplayLabel(expense)} · {formatCurrencyFromRupees(expense.amountRupees)}
               </p>
               <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
                 {formatDateKeyDisplay(expense.dateKey)}
-                {expense.note ? ` · ${expense.note}` : ''}
+                {expense.title?.trim() ? ` · ${expense.category}` : ''}
+                {!expense.title?.trim() && expense.note ? ` · ${expense.note}` : ''}
               </p>
             </div>
             <div className="flex gap-2">

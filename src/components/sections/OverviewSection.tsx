@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CalendarEventItem, Expense, Goal, HeatmapItem, IncomeEntry, MonthSummary } from '../../types/finance';
 import { formatCurrencyFromRupees, formatDateKeyDisplay, formatDateTimeDisplay } from '../../lib/format';
+import { getExpenseDisplayLabel, getExpenseSecondaryLine } from '../../lib/expense';
 import { OverviewTopSection } from './overview/OverviewTopSection';
 import { OverviewBottomCards } from './overview/OverviewBottomCards';
 
@@ -267,8 +268,8 @@ export function OverviewSection({
                     {dateExpenses.map((expense) => (
                       <div key={expense._id} className="flex items-center justify-between rounded-lg border border-zinc-700/30 px-3 py-2 text-sm">
                         <div>
-                          <p className={isDark ? 'text-zinc-100' : 'text-zinc-900'}>{expense.category}</p>
-                          <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{expense.note || 'No note'}</p>
+                          <p className={isDark ? 'text-zinc-100' : 'text-zinc-900'}>{getExpenseDisplayLabel(expense)}</p>
+                          <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{getExpenseSecondaryLine(expense)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={isDark ? 'text-zinc-200' : 'text-zinc-900'}>{formatCurrencyFromRupees(expense.amountRupees)}</span>

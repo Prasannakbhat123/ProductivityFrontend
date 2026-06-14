@@ -11,7 +11,7 @@ type ExpenseEntrySectionProps = {
   isDark: boolean;
   isPending: boolean;
   onCreateCategory: (name: string) => Promise<void> | void;
-  onSubmitExpense: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onSubmitExpense: (payload: { amount: string; category: string; title: string; note: string; date: string }) => void;
   onSubmitIncome: (payload: { amount: string; source: string; note: string; date: string }) => void;
 };
 
@@ -26,6 +26,7 @@ export function ExpenseEntrySection({
   const [entryType, setEntryType] = useState<TransactionEntryType>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categories[0] ?? 'Food');
+  const [title, setTitle] = useState('');
   const [source, setSource] = useState(DEFAULT_INCOME_SOURCES[0]);
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -43,6 +44,7 @@ export function ExpenseEntrySection({
 
   const resetFields = () => {
     setAmount('');
+    setTitle('');
     setNote('');
   };
 
@@ -108,16 +110,29 @@ export function ExpenseEntrySection({
               isDark={isDark}
             />
           ) : (
-            <CustomDropdown
-              label="Category"
-              value={category}
-              options={categoryOptions}
-              placeholder="Select category"
-              searchPlaceholder="Search or add category"
-              onChange={setCategory}
-              onCreateOption={onCreateCategory}
-              isDark={isDark}
-            />
+            <>
+              <CustomDropdown
+                label="Category"
+                value={category}
+                options={categoryOptions}
+                placeholder="Select category"
+                searchPlaceholder="Search or add category"
+                onChange={setCategory}
+                onCreateOption={onCreateCategory}
+                isDark={isDark}
+              />
+              <div className="mt-3">
+                <label className={`mb-1.5 block text-xs sm:text-sm font-semibold ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                  Title (optional)
+                </label>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="e.g. Groceries run, Uber to airport"
+                  className={inputClass}
+                />
+              </div>
+            </>
           )}
         </div>
 
@@ -140,7 +155,7 @@ export function ExpenseEntrySection({
             if (isIncome) {
               onSubmitIncome({ amount, source, note, date });
             } else {
-              onSubmitExpense({ amount, category, note, date });
+              onSubmitExpense({ amount, category, title, note, date });
             }
             resetFields();
           }}

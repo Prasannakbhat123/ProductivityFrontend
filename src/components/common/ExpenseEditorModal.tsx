@@ -4,19 +4,21 @@ import type { Expense } from '../../types/finance';
 type ExpenseEditorModalProps = {
   expense: Expense;
   onClose: () => void;
-  onSubmit: (payload: { id: string; amountRupees: number; category: string; note: string }) => void;
+  onSubmit: (payload: { id: string; amountRupees: number; category: string; title: string; note: string }) => void;
   isSubmitting: boolean;
 };
 
 export function ExpenseEditorModal({ expense, onClose, onSubmit, isSubmitting }: ExpenseEditorModalProps) {
   const [amountInput, setAmountInput] = useState(String(expense.amountRupees));
   const [category, setCategory] = useState(expense.category);
+  const [title, setTitle] = useState(expense.title ?? '');
   const [note, setNote] = useState(expense.note ?? '');
   const [error, setError] = useState('');
 
   useEffect(() => {
     setAmountInput(String(expense.amountRupees));
     setCategory(expense.category);
+    setTitle(expense.title ?? '');
     setNote(expense.note ?? '');
     setError('');
   }, [expense]);
@@ -37,6 +39,7 @@ export function ExpenseEditorModal({ expense, onClose, onSubmit, isSubmitting }:
       id: expense._id,
       amountRupees: Number(parsed.toFixed(2)),
       category: category.trim(),
+      title: title.trim(),
       note: note.trim(),
     });
   };
@@ -50,7 +53,7 @@ export function ExpenseEditorModal({ expense, onClose, onSubmit, isSubmitting }:
         onClick={(event) => event.stopPropagation()}
       >
         <h3 className="text-lg sm:text-xl font-bold">Edit Expense</h3>
-        <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Update amount, category, or note for this entry.</p>
+        <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Update amount, category, title, or note for this entry.</p>
 
         <label className="mt-3 sm:mt-4 mb-1.5 block text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="expense-amount">
           Amount (INR)
@@ -71,6 +74,17 @@ export function ExpenseEditorModal({ expense, onClose, onSubmit, isSubmitting }:
           value={category}
           onChange={(event) => setCategory(event.target.value)}
           placeholder="Category"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition focus:border-lime-500 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-lime-400"
+        />
+
+        <label className="mt-3 sm:mt-4 mb-1.5 block text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="expense-title">
+          Title (optional)
+        </label>
+        <input
+          id="expense-title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Shown instead of category when set"
           className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none transition focus:border-lime-500 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-lime-400"
         />
 

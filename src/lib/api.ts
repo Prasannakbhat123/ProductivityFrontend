@@ -55,11 +55,11 @@ export const api = {
   setBudget: (payload: { monthKey: string; category: string; limitRupees: number }) =>
     request<BudgetCategory>('/api/finance/budgets', { method: 'POST', body: JSON.stringify(payload) }),
   deleteBudget: (id: string) => request<{ message: string }>(`/api/finance/budgets/${id}`, { method: 'DELETE' }),
-  addExpense: (payload: { amountRupees: number; category: string; note?: string; date?: string }) =>
+  addExpense: (payload: { amountRupees: number; category: string; title?: string; note?: string; date?: string }) =>
     request<Expense>('/api/finance/expenses', { method: 'POST', body: JSON.stringify(payload) }),
   updateExpense: (
     id: string,
-    payload: { amountRupees?: number; category?: string; note?: string; date?: string },
+    payload: { amountRupees?: number; category?: string; title?: string; note?: string; date?: string },
   ) => request<Expense>(`/api/finance/expenses/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   deleteExpense: (id: string) => request<{ ok: true }>(`/api/finance/expenses/${id}`, { method: 'DELETE' }),
   getExpenses: (params: {

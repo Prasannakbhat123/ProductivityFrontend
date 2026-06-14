@@ -23,7 +23,7 @@ type ExpensesWorkspaceSectionProps = {
   categories: string[];
   isPendingEntry: boolean;
   onCreateCategory: (name: string) => Promise<void> | void;
-  onAddExpense: (payload: { amount: string; category: string; note: string; date: string }) => void;
+  onAddExpense: (payload: { amount: string; category: string; title: string; note: string; date: string }) => void;
   onAddIncome: (payload: { amount: string; source: string; note: string; date: string }) => void;
   onCreateEvent: (payload: {
     title: string;
